@@ -10,3 +10,6 @@ xcuserdata/
 
 # OMC state
 .omc/
+
+# Release artifacts
+*.dmg
