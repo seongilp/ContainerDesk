@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContainerDesk — GUI for Apple Container</title>
+<meta name="description" content="Docker Desktop-style GUI for Apple's container CLI. Manage containers, images, volumes and networks on macOS.">
+<link rel="icon" type="image/png" href="icon.png">
+<meta property="og:title" content="ContainerDesk">
+<meta property="og:description" content="Docker Desktop-style GUI for Apple Container on macOS">
+<meta property="og:image" content="https://seongilp.github.io/ContainerDesk/screenshot.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0b0e17;
+  --ink-2: #10141f;
+  --panel: #161b29;
+  --line: #232a3d;
+  --text: #e8ecf6;
+  --muted: #8d96ad;
+  --faint: #5a6379;
+  --blue: #3b82f6;
+  --blue-hi: #60a5fa;
+  --blue-deep: #0c2b73;
+  --green: #34d399;
+  --radius: 14px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: "Bricolage Grotesque", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+code, .mono { font-family: "IBM Plex Mono", monospace; }
+
+/* backdrop: grid + glow */
+.backdrop {
+  position: fixed; inset: 0; z-index: -1;
+  background:
+    radial-gradient(900px 500px at 70% -10%, rgba(59,130,246,.16), transparent 60%),
+    radial-gradient(700px 500px at 10% 110%, rgba(59,130,246,.07), transparent 60%),
+    var(--ink);
+}
+.backdrop::after {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(141,150,173,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(141,150,173,.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 30%, transparent 75%);
+}
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+/* nav */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 0;
+}
+.brand { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
+.brand img { width: 34px; height: 34px; border-radius: 8px; }
+.nav-links { display: flex; gap: 26px; align-items: center; }
+.nav-links a { color: var(--muted); text-decoration: none; font-size: 14.5px; transition: color .18s; }
+.nav-links a:hover { color: var(--text); }
+.gh-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--line); border-radius: 9px;
+  padding: 7px 14px; color: var(--text) !important; font-weight: 600;
+  transition: border-color .18s, background .18s;
+}
+.gh-btn:hover { border-color: var(--blue); background: rgba(59,130,246,.08); }
+
+/* hero */
+.hero { text-align: center; padding: 84px 0 40px; }
+.badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: "IBM Plex Mono", monospace; font-size: 12.5px;
+  color: var(--blue-hi); background: rgba(59,130,246,.1);
+  border: 1px solid rgba(59,130,246,.28); border-radius: 999px;
+  padding: 6px 14px; margin-bottom: 28px;
+  animation: rise .7s cubic-bezier(.2,.7,.3,1) both;
+}
+.badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2.2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+h1 {
+  font-size: clamp(44px, 7.5vw, 84px);
+  font-weight: 750; line-height: .98; letter-spacing: -.035em;
+  animation: rise .7s .08s cubic-bezier(.2,.7,.3,1) both;
+}
+h1 .accent {
+  background: linear-gradient(120deg, var(--blue-hi), var(--blue) 55%, #2563eb);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.sub {
+  margin: 26px auto 0; max-width: 620px;
+  color: var(--muted); font-size: 19px; line-height: 1.6; font-weight: 400;
+  animation: rise .7s .16s cubic-bezier(.2,.7,.3,1) both;
+}
+.sub code {
+  font-size: 16px; color: var(--blue-hi);
+  background: rgba(59,130,246,.09); border: 1px solid rgba(59,130,246,.2);
+  padding: 1.5px 7px; border-radius: 6px;
+}
+.cta-row {
+  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  margin-top: 38px;
+  animation: rise .7s .24s cubic-bezier(.2,.7,.3,1) both;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: inherit; font-size: 15.5px; font-weight: 650;
+  padding: 14px 26px; border-radius: 12px; text-decoration: none;
+  transition: transform .16s, box-shadow .16s, border-color .16s, background .16s;
+}
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(140deg, #4f8ef7, #2563eb);
+  box-shadow: 0 8px 28px rgba(37,99,235,.36), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(37,99,235,.48), inset 0 1px 0 rgba(255,255,255,.18); }
+.btn-ghost {
+  color: var(--text); border: 1px solid var(--line); background: rgba(22,27,41,.6);
+}
+.btn-ghost:hover { border-color: var(--blue); background: rgba(59,130,246,.08); transform: translateY(-2px); }
+.cta-note { margin-top: 16px; font-size: 13px; color: var(--faint); font-family: "IBM Plex Mono", monospace;
+  animation: rise .7s .3s cubic-bezier(.2,.7,.3,1) both; }
+
+/* screenshot */
+.shot {
+  margin: 64px auto 0; position: relative; max-width: 980px;
+  animation: rise .9s .34s cubic-bezier(.2,.7,.3,1) both;
+}
+.shot::before {
+  content: ""; position: absolute; inset: -8% -12% auto;
+  height: 70%;
+  background: radial-gradient(60% 80% at 50% 20%, rgba(59,130,246,.22), transparent 70%);
+  filter: blur(30px); z-index: 0;
+}
+.shot img {
+  position: relative; width: 100%; display: block;
+  border-radius: 16px; border: 1px solid var(--line);
+  box-shadow: 0 40px 90px rgba(0,0,0,.55), 0 0 0 1px rgba(59,130,246,.08);
+}
+
+/* sections */
+section { padding: 96px 0 0; }
+.kicker {
+  font-family: "IBM Plex Mono", monospace; font-size: 12.5px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--blue-hi);
+  margin-bottom: 14px;
+}
+h2 { font-size: clamp(30px, 4.4vw, 44px); font-weight: 720; letter-spacing: -.025em; line-height: 1.06; }
+
+/* features */
+.grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 44px;
+}
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+.card {
+  background: linear-gradient(180deg, rgba(22,27,41,.85), rgba(16,20,31,.85));
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 26px 24px; position: relative; overflow: hidden;
+  transition: transform .2s, border-color .2s;
+}
+.card:hover { transform: translateY(-3px); border-color: rgba(59,130,246,.45); }
+.card:hover .card-icon { color: var(--blue-hi); }
+.card-icon {
+  font-family: "IBM Plex Mono", monospace; font-size: 20px;
+  color: var(--faint); margin-bottom: 16px; transition: color .2s;
+}
+.card h3 { font-size: 17px; font-weight: 680; margin-bottom: 8px; letter-spacing: -.01em; }
+.card p { color: var(--muted); font-size: 14.5px; line-height: 1.62; }
+.card p code { font-size: 12.5px; color: var(--blue-hi); }
+
+/* install */
+.install-box {
+  margin-top: 44px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+@media (max-width: 800px) { .install-box { grid-template-columns: 1fr; } }
+.term {
+  background: #0d1119; border: 1px solid var(--line); border-radius: var(--radius);
+  overflow: hidden;
+}
+.term-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px; border-bottom: 1px solid var(--line);
+}
+.term-bar .tl { width: 11px; height: 11px; border-radius: 50%; }
+.term-bar .tl:nth-child(1) { background: #ff5f57; }
+.term-bar .tl:nth-child(2) { background: #febc2e; }
+.term-bar .tl:nth-child(3) { background: #28c840; }
+.term-bar span { margin-left: 8px; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--faint); }
+.term-body { padding: 22px; font-family: "IBM Plex Mono", monospace; font-size: 13.5px; line-height: 2.1; position: relative; }
+.term-body .p { color: var(--green); user-select: none; }
+.term-body .c { color: var(--faint); }
+.copy-btn {
+  position: absolute; top: 14px; right: 14px;
+  font-family: "IBM Plex Mono", monospace; font-size: 11.5px; font-weight: 600;
+  color: var(--muted); background: rgba(35,42,61,.6); border: 1px solid var(--line);
+  border-radius: 7px; padding: 6px 11px; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.copy-btn:hover { color: var(--text); border-color: var(--blue); }
+.dmg-card {
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+  gap: 14px; padding: 32px;
+  background: linear-gradient(150deg, rgba(37,99,235,.14), rgba(22,27,41,.9) 60%);
+  border: 1px solid rgba(59,130,246,.3); border-radius: var(--radius);
+}
+.dmg-card h3 { font-size: 20px; font-weight: 700; letter-spacing: -.015em; }
+.dmg-card p { color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+.dmg-card p code { font-size: 12px; color: var(--blue-hi); word-break: break-all; }
+.note {
+  margin-top: 18px; font-size: 13.5px; color: var(--faint); line-height: 1.7;
+  font-family: "IBM Plex Mono", monospace;
+}
+.note code { color: var(--muted); background: var(--panel); padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); }
+
+/* footer */
+footer {
+  margin-top: 110px; border-top: 1px solid var(--line);
+  padding: 34px 0 46px;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;
+}
+footer, footer a { color: var(--faint); font-size: 13.5px; text-decoration: none; }
+footer a:hover { color: var(--text); }
+.foot-brand { display: flex; align-items: center; gap: 9px; }
+.foot-brand img { width: 22px; height: 22px; border-radius: 5px; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
+.reveal.in { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+<div class="backdrop"></div>
+
+<div class="wrap">
+  <nav>
+    <div class="brand"><img src="icon.png" alt=""> ContainerDesk</div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a class="gh-btn" href="https://github.com/seongilp/ContainerDesk">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="badge"><span class="dot"></span>native macOS · open source</div>
+    <h1>Apple Container,<br>finally with a <span class="accent">face.</span></h1>
+    <p class="sub">Docker Desktop-style GUI for Apple's <code>container</code> CLI.
+    Manage containers, images, volumes and networks — live logs, one-click engine control, zero terminal gymnastics.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/seongilp/ContainerDesk/releases/latest/download/ContainerDesk-1.0.0.dmg">
+        ⬇ Download .dmg
+      </a>
+      <a class="btn btn-ghost mono" href="#install">$ brew install containerdesk</a>
+    </div>
+    <div class="cta-note">macOS 15+ · Apple Silicon · ~2 MB</div>
+    <div class="shot"><img src="screenshot.png" alt="ContainerDesk main window showing the container list"></div>
+  </header>
+
+  <section id="features">
+    <div class="kicker">// features</div>
+    <h2>Everything the CLI does.<br>None of the flags.</h2>
+    <div class="grid">
+      <div class="card reveal">
+        <div class="card-icon">▸_</div>
+        <h3>Live log streaming</h3>
+        <p>Follows <code>logs --follow</code> in real time with auto-scroll. Info grid and pretty-printed inspect JSON one tab away.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">⏻</div>
+        <h3>One-click engine</h3>
+        <p>Start and stop the container system service from the sidebar. Status light tells you what's running at a glance.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">↻</div>
+        <h3>Always in sync</h3>
+        <p>Polls every 3 seconds. Start a container from any terminal — it shows up here before you can ⌘-Tab back.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">⚙</div>
+        <h3>Full run configuration</h3>
+        <p>Ports, volumes, env vars, CPU and memory limits, <code>--rm</code> — a proper form instead of a 200-char command.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">◫</div>
+        <h3>Images, pulled visually</h3>
+        <p>Pull with one-tap suggestions, prune unused layers, or spin a container straight from any local image.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">&gt;$</div>
+        <h3>Shell, one click away</h3>
+        <p>Opens <code>exec -it</code> in Terminal.app for any running container. Volumes and networks managed in-app too.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="kicker">// install</div>
+    <h2>Two ways in.</h2>
+    <div class="install-box">
+      <div class="term reveal">
+        <div class="term-bar"><div class="tl"></div><div class="tl"></div><div class="tl"></div><span>zsh — homebrew</span></div>
+        <div class="term-body">
+          <button class="copy-btn" data-copy="brew tap seongilp/tap && brew trust seongilp/tap && brew install --cask containerdesk">copy</button>
+          <div><span class="p">$</span> brew tap seongilp/tap</div>
+          <div><span class="p">$</span> brew trust seongilp/tap</div>
+          <div><span class="p">$</span> brew install --cask containerdesk</div>
+          <div class="c"># needs the engine too:</div>
+          <div><span class="p">$</span> brew install container</div>
+        </div>
+      </div>
+      <div class="dmg-card reveal">
+        <h3>Prefer a disk image?</h3>
+        <p>Grab the DMG, drag ContainerDesk into Applications. Done.</p>
+        <a class="btn btn-primary" href="https://github.com/seongilp/ContainerDesk/releases/latest/download/ContainerDesk-1.0.0.dmg">⬇ ContainerDesk-1.0.0.dmg</a>
+        <p>App is ad-hoc signed — if Gatekeeper complains on first launch:<br>
+        <code>xattr -dr com.apple.quarantine /Applications/ContainerDesk.app</code></p>
+      </div>
+    </div>
+    <p class="note">requires <code>container</code> CLI (<a href="https://github.com/apple/container" style="color:inherit">github.com/apple/container</a>) · macOS 15 or later</p>
+  </section>
+
+  <footer>
+    <div class="foot-brand"><img src="icon.png" alt=""> ContainerDesk</div>
+    <div>
+      <a href="https://github.com/seongilp/ContainerDesk">Source</a> ·
+      <a href="https://github.com/seongilp/ContainerDesk/releases">Releases</a> ·
+      <a href="https://github.com/seongilp/ContainerDesk/issues">Issues</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+document.querySelectorAll(".copy-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(btn.dataset.copy);
+      btn.textContent = "copied ✓";
+      setTimeout(() => (btn.textContent = "copy"), 1600);
+    } catch (_) {
+      btn.textContent = "⌘C?";
+      setTimeout(() => (btn.textContent = "copy"), 1600);
+    }
+  });
+});
+const io = new IntersectionObserver(entries => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      entry.target.style.transitionDelay = `${(i % 3) * 70}ms`;
+      entry.target.classList.add("in");
+      io.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+</script>
+</body>
+</html>
