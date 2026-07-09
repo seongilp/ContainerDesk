@@ -13,3 +13,4 @@ xcuserdata/
 
 # Release artifacts
 *.dmg
+.gstack/

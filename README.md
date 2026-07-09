@@ -21,8 +21,7 @@ brew install --cask containerdesk
 ```
 
 또는 [Releases](https://github.com/seongilp/ContainerDesk/releases)에서 DMG를 받아 Applications로 드래그.
-
-ad-hoc 서명이라 첫 실행이 차단되면: `xattr -dr com.apple.quarantine /Applications/ContainerDesk.app`
+(Developer ID 서명 + Apple 공증 완료 — Gatekeeper 경고 없음)
 
 ## Requirements
 
